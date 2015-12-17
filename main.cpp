@@ -1014,6 +1014,11 @@ GraphNode<Payload>* Labyrinth::goToNextIntersectionAndCreateNodeIfItDoesntExist(
     int initialDirectionIndex = 2 + (y - node->getY()) + ((x - node->getX()) * 2);
     int prevPositionIndex;
     int length = navigateToNextIntersection(node, x, y, prevPositionIndex);
+    
+    if (length == 0) {
+        //Nodo non creato dato che che si trattava di un vicolo cieco
+        return 0;
+    }
 
     //Arrivati qui siamo in un incrocio o in un vicolo cieco
     //Verifica se esiste già il nodo corrispondente
@@ -1063,6 +1068,7 @@ GraphNode<Payload>* Labyrinth::goToNextIntersectionAndCreateNodeIfItDoesntExist(
     if (destinationNodeWasCreated) {
         return destinationNode;
     }
+    
     return 0;
 }
 
@@ -1088,7 +1094,8 @@ int Labyrinth::navigateToNextIntersection(GraphNode<Payload>* node, int &x, int 
     int nextPositionIndex;
 
     int length = 1;
-    while ((emptyCells[0] + emptyCells[1] + emptyCells[3] + emptyCells[4]) == 2) {
+    int numEmpty = (emptyCells[0] + emptyCells[1] + emptyCells[3] + emptyCells[4]);
+    while (numEmpty == 2) {
 
         if (cellCallback != 0) {
             (this->*cellCallback)(x, y);
@@ -1128,9 +1135,15 @@ int Labyrinth::navigateToNextIntersection(GraphNode<Payload>* node, int &x, int 
         emptyCells[1] = (n == ' ' || n == '+');
         emptyCells[3] = (s == ' ' || s == '+');
         emptyCells[4] = (e == ' ' || e == '+');
+        
+        numEmpty = (emptyCells[0] + emptyCells[1] + emptyCells[3] + emptyCells[4]);
     }
 
-    return length;
+    if (numEmpty == 1) {
+        return 0;
+    } else {
+        return length;
+    }
 }
 
 Labyrinth::Labyrinth(char* stringInput, const int rows, const int columns) : input(stringInput), rows(rows), columns(columns) {
