@@ -611,7 +611,7 @@ Payload::~Payload() {
 
 class Labyrinth {
 public:
-    Labyrinth(char* input, const int rows, const int columns);
+    Labyrinth(char* input, const int rows, const int columns, const int newlineLength);
     virtual ~Labyrinth();
 
     void drawSolution();
@@ -619,6 +619,7 @@ private:
     char* input;
     const int rows;
     const int columns;
+    const int newlineLength;
     GraphNode<Payload>** nodes;
     GraphNode<Payload>* upperExitNode;
     GraphNode<Payload>* lowerExitNode;
@@ -1076,10 +1077,10 @@ int Labyrinth::navigateToNextIntersection(GraphNode<Payload>* node, int &x, int 
     int dirX = x - node->getX();
     int dirY = y - node->getY();
 
-    char w = input[y * (columns + 1) + x - 1];
-    char n = input[(y - 1) * (columns + 1) + x];
-    char s = input[(y + 1) * (columns + 1) + x];
-    char e = input[y * (columns + 1) + x + 1];
+    char w = input[y * (columns + newlineLength) + x - 1];
+    char n = input[(y - 1) * (columns + newlineLength) + x];
+    char s = input[(y + 1) * (columns + newlineLength) + x];
+    char e = input[y * (columns + newlineLength) + x + 1];
     
     bool emptyCells[5] = {
         (w == ' ' || w == '+'),
@@ -1126,10 +1127,10 @@ int Labyrinth::navigateToNextIntersection(GraphNode<Payload>* node, int &x, int 
         ++length;
 
         //Aggiorna le celle vuote attorno alla nuova posizione
-        w = input[y * (columns + 1) + x - 1];
-        n = input[(y - 1) * (columns + 1) + x];
-        s = input[(y + 1) * (columns + 1) + x];
-        e = input[y * (columns + 1) + x + 1];
+        w = input[y * (columns + newlineLength) + x - 1];
+        n = input[(y - 1) * (columns + newlineLength) + x];
+        s = input[(y + 1) * (columns + newlineLength) + x];
+        e = input[y * (columns + newlineLength) + x + 1];
         
         emptyCells[0] = (w == ' ' || w == '+');
         emptyCells[1] = (n == ' ' || n == '+');
@@ -1146,45 +1147,47 @@ int Labyrinth::navigateToNextIntersection(GraphNode<Payload>* node, int &x, int 
     }
 }
 
-Labyrinth::Labyrinth(char* stringInput, const int rows, const int columns) : input(stringInput), rows(rows), columns(columns) {
+Labyrinth::Labyrinth(char* stringInput, const int rows, const int columns, const int newlineLength)
+    : input(stringInput), rows(rows), columns(columns), newlineLength(newlineLength) {
+    
     int maxNodeCount = rows * columns;
     nodes = new GraphNode<Payload>*[maxNodeCount];
     //Azzera tutti i puntatori
     memset(nodes, 0, maxNodeCount * sizeof (GraphNode<Payload>*));
 
-    const int lastRowOffset = (rows - 1) * (columns + 1);
+    const int lastRowOffset = (rows - 1) * (columns + newlineLength);
 
-    int upperExit = -1;
-    int lowerExit = -1;
+    int upperExitXCoordinate = -1;
+    int lowerExitXCoordinate = -1;
 
     for (int i = columns - 1; i >= 0; --i) {
         if (input[i] == ' ') {
-            upperExit = i;
+            upperExitXCoordinate = i;
         }
         if (input[lastRowOffset + i] == ' ') {
-            lowerExit = i;
+            lowerExitXCoordinate = i;
         }
     }
 
-    upperExitNode = new GraphNode<Payload>(upperExit, 0);
+    upperExitNode = new GraphNode<Payload>(upperExitXCoordinate, 0);
     Payload* p = new Payload(upperExitNode);
     upperExitNode->setPayload(p);
-    nodes[upperExit] = upperExitNode;
+    nodes[upperExitXCoordinate] = upperExitNode;
 
-    lowerExitNode = new GraphNode<Payload>(lowerExit, rows - 1);
+    lowerExitNode = new GraphNode<Payload>(lowerExitXCoordinate, rows - 1);
     p = new Payload(lowerExitNode);
     lowerExitNode->setPayload(p);
-    nodes[columns * (rows - 1) + lowerExit] = lowerExitNode;
+    nodes[columns * (rows - 1) + lowerExitXCoordinate] = lowerExitNode;
 
     std::stack<GraphNode<Payload>*>* nodeStack = new std::stack<GraphNode<Payload>*>();
 
     //Inizializza lo stack con i nodi raggiungibili dalle due uscite
-    GraphNode<Payload>* nodeToPush = goToNextIntersectionAndCreateNodeIfItDoesntExist(upperExitNode, upperExit, 1);
+    GraphNode<Payload>* nodeToPush = goToNextIntersectionAndCreateNodeIfItDoesntExist(upperExitNode, upperExitXCoordinate, 1);
     if (nodeToPush != 0) {
         nodeStack->push(nodeToPush);
     }
 
-    nodeToPush = goToNextIntersectionAndCreateNodeIfItDoesntExist(lowerExitNode, lowerExit, rows - 2);
+    nodeToPush = goToNextIntersectionAndCreateNodeIfItDoesntExist(lowerExitNode, lowerExitXCoordinate, rows - 2);
     if (nodeToPush != 0) {
         nodeStack->push(nodeToPush);
     }
@@ -1200,7 +1203,7 @@ Labyrinth::Labyrinth(char* stringInput, const int rows, const int columns) : inp
 
         int x = nodeX;
         int y = nodeY - 1;
-        if (node->getN() == 0 && input[y * (columns + 1) + x] == ' ') {
+        if (node->getN() == 0 && input[y * (columns + newlineLength) + x] == ' ') {
             nodeToPush = goToNextIntersectionAndCreateNodeIfItDoesntExist(node, x, y);
             if (nodeToPush != 0) {
                 nodeStack->push(nodeToPush);
@@ -1208,7 +1211,7 @@ Labyrinth::Labyrinth(char* stringInput, const int rows, const int columns) : inp
         }
 
         y = nodeY + 1;
-        if (node->getS() == 0 && input[y * (columns + 1) + x] == ' ') {
+        if (node->getS() == 0 && input[y * (columns + newlineLength) + x] == ' ') {
             nodeToPush = goToNextIntersectionAndCreateNodeIfItDoesntExist(node, x, y);
             if (nodeToPush != 0) {
                 nodeStack->push(nodeToPush);
@@ -1217,7 +1220,7 @@ Labyrinth::Labyrinth(char* stringInput, const int rows, const int columns) : inp
 
         x = nodeX - 1;
         y = nodeY;
-        if (node->getW() == 0 && input[y * (columns + 1) + x] == ' ') {
+        if (node->getW() == 0 && input[y * (columns + newlineLength) + x] == ' ') {
             nodeToPush = goToNextIntersectionAndCreateNodeIfItDoesntExist(node, x, y);
             if (nodeToPush != 0) {
                 nodeStack->push(nodeToPush);
@@ -1225,7 +1228,7 @@ Labyrinth::Labyrinth(char* stringInput, const int rows, const int columns) : inp
         }
 
         x = nodeX + 1;
-        if (node->getE() == 0 && input[y * (columns + 1) + x] == ' ') {
+        if (node->getE() == 0 && input[y * (columns + newlineLength) + x] == ' ') {
             nodeToPush = goToNextIntersectionAndCreateNodeIfItDoesntExist(node, x, y);
             if (nodeToPush != 0) {
                 nodeStack->push(nodeToPush);
@@ -1234,6 +1237,9 @@ Labyrinth::Labyrinth(char* stringInput, const int rows, const int columns) : inp
     }
 
     delete nodeStack;
+    
+    //@todo: rimuovere i nodi che sono dei vicoli ciechi e poi ripetere
+    //iterativamente il processo fino a che non si può più eliminare niente
 }
 
 void Labyrinth::drawSolution() {
@@ -1342,14 +1348,14 @@ int Labyrinth::heuristic(int x, int y) const {
 
 void Labyrinth::outputSolution() {
     GraphNode<Payload>* node = getEndNode();
-    input[node->getY()*(columns + 1) + node->getX()] = '+';
+    input[node->getY()*(columns + newlineLength) + node->getX()] = '+';
 
     const GraphEdge<Payload>* edge = node->getPayload()->getCameFromEdge();
 
     while (edge != 0) {
         drawPath(node, edge);
         node = getNodeAtTheOtherEndOfEdge(node, edge);
-        input[node->getY() * (columns + 1) + node->getX()] = '+';
+        input[node->getY() * (columns + newlineLength) + node->getX()] = '+';
 
         edge = node->getPayload()->getCameFromEdge();
     }
@@ -1385,7 +1391,7 @@ void Labyrinth::drawPath(GraphNode<Payload>* node, const GraphEdge<Payload>* edg
 }
 
 void Labyrinth::drawX(int x, int y) {
-    input[y * (columns + 1) + x] = '+';
+    input[y * (columns + newlineLength) + x] = '+';
 }
 
 GraphNode<Payload>* Labyrinth::getStartNode() const {
@@ -1457,7 +1463,7 @@ int main(int argc, char** argv) {
     }
     
     //Input letto. Crea il grafo
-    Labyrinth lab(input, rows, columns);
+    Labyrinth lab(input, rows, columns, 1);
 
     lab.drawSolution();
 
