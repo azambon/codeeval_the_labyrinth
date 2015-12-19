@@ -1408,23 +1408,18 @@ void Labyrinth::outputSolution() {
 void Labyrinth::drawPath(GraphNode<Payload>* node, const GraphEdge<Payload>* edge) {
     int x = node->getX();
     int y = node->getY();
-    int dirX = 0;
-    int dirY = 0;
 
     if (node->getN() == edge) {
-        --dirY;
+        --y;
     } else if (node->getE() == edge) {
-        ++dirX;
+        ++x;
     } else if (node->getS() == edge) {
-        ++dirY;
+        ++y;
     } else if (node->getW() == edge) {
-        --dirX;
+        --x;
     } else {
         throw "Unknown edge";
     }
-
-    x += dirX;
-    y += dirY;
 
     //Ora x ed x fanno riferimento alla prima casella nella direzione in cui ci
     //si deve spostare
