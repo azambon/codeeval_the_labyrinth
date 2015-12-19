@@ -81,28 +81,20 @@ template <typename T>
 class GraphNode {
 public:
 
-    GraphNode(int x, int y) {
-        this->x = x;
-        this->y = y;
-
-        this->n = 0;
-        this->e = 0;
-        this->s = 0;
-        this->w = 0;
-
-        this->payload = 0;
+    GraphNode(int x, int y) : x(x), y(y) {
+        n = 0;
+        e = 0;
+        s = 0;
+        w = 0;
+        
+        payload = 0;
     }
 
-    GraphNode(int x, int y, T* payload) {
-        this->x = x;
-        this->y = y;
-
-        this->n = 0;
-        this->e = 0;
-        this->s = 0;
-        this->w = 0;
-
-        this->payload = payload;
+    GraphNode(int x, int y, T* payload) : x(x), y(y), payload(payload) {
+        n = 0;
+        e = 0;
+        s = 0;
+        w = 0;
     }
 
     virtual ~GraphNode() {
@@ -156,22 +148,31 @@ public:
     void setPayload(T* newPayload) {
         payload = newPayload;
     }
-
+    
     int countEdges() const {
         int res = 0;
-        if (this->n != 0) {
+        if (n != 0) {
             ++res;
         }
-        if (this->e != 0) {
+        if (e != 0) {
             ++res;
         }
-        if (this->s != 0) {
+        if (s != 0) {
             ++res;
         }
-        if (this->w != 0) {
+        if (w != 0) {
             ++res;
         }
         return res;
+    }
+    
+    GraphEdge<T>* getSingleEdge() const {
+        return reinterpret_cast<GraphEdge<T>*> (
+            reinterpret_cast<uintptr_t> (n) +
+            reinterpret_cast<uintptr_t> (e) +
+            reinterpret_cast<uintptr_t> (s) +
+            reinterpret_cast<uintptr_t> (w)
+            );
     }
 private:
     //Coordinate del nodo
@@ -184,22 +185,22 @@ private:
     GraphEdge<T>* e;
     GraphEdge<T>* s;
     GraphEdge<T>* w;
-
+    
     void clearEdges() {
-        if (this->n != 0) {
-            delete this->n;
+        if (n != 0) {
+            delete n;
         }
 
-        if (this->e != 0) {
-            delete this->e;
+        if (e != 0) {
+            delete e;
         }
 
-        if (this->s != 0) {
-            delete this->s;
+        if (s != 0) {
+            delete s;
         }
 
-        if (this->w != 0) {
-            delete this->w;
+        if (w != 0) {
+            delete w;
         }
     }
     //void removeEdge(GraphEdge<T>* edge) const;
@@ -631,7 +632,7 @@ private:
     GraphNode<Payload>* getNodeAtTheOtherEndOfEdge(const GraphNode<Payload>* currentNode, const GraphEdge<Payload>* edge) const;
     void outputSolution();
     void drawPath(GraphNode<Payload>* node, const GraphEdge<Payload>* edge);
-    void drawX(int x, int y);
+    void drawPlus(int x, int y);
     GraphNode<Payload>* getStartNode() const;
     GraphNode<Payload>* getEndNode() const;
 
@@ -1107,7 +1108,7 @@ int Labyrinth::navigateToNextIntersection(GraphNode<Payload>* node, int &x, int 
             if (nextPositionIndex == prevPositionIndex) {
                 continue;
             }
-            if (emptyCells[nextPositionIndex] == true) {
+            if (emptyCells[nextPositionIndex]) {
                 break;
             }
         }
@@ -1119,7 +1120,7 @@ int Labyrinth::navigateToNextIntersection(GraphNode<Payload>* node, int &x, int 
         nextPositionIndex -= 2;
 
         dirX = nextPositionIndex / 2;
-        dirY = (nextPositionIndex - (dirX << 1));
+        dirY = (nextPositionIndex - (dirX << 1));   //dirX * 2
 
         x += dirX;
         y += dirY;
@@ -1203,36 +1204,79 @@ Labyrinth::Labyrinth(char* stringInput, const int rows, const int columns, const
 
         int x = nodeX;
         int y = nodeY - 1;
-        if (node->getN() == 0 && input[y * (columns + newlineLength) + x] == ' ') {
-            nodeToPush = goToNextIntersectionAndCreateNodeIfItDoesntExist(node, x, y);
-            if (nodeToPush != 0) {
-                nodeStack->push(nodeToPush);
+        int edgeCount = 0;
+        
+        if (node->getN() == 0) {
+            if (input[y * (columns + newlineLength) + x] == ' ') {
+                nodeToPush = goToNextIntersectionAndCreateNodeIfItDoesntExist(node, x, y);
+                if (node->getN() != 0) {
+                    ++edgeCount;
+                    if (nodeToPush != 0) {
+                        nodeStack->push(nodeToPush);
+                    }
+                }
             }
+        } else {
+            ++edgeCount;
         }
 
         y = nodeY + 1;
-        if (node->getS() == 0 && input[y * (columns + newlineLength) + x] == ' ') {
-            nodeToPush = goToNextIntersectionAndCreateNodeIfItDoesntExist(node, x, y);
-            if (nodeToPush != 0) {
-                nodeStack->push(nodeToPush);
+        if (node->getS() == 0) {
+            if (input[y * (columns + newlineLength) + x] == ' ') {
+                nodeToPush = goToNextIntersectionAndCreateNodeIfItDoesntExist(node, x, y);
+                if (node->getS() != 0) {
+                    ++edgeCount;
+                    if (nodeToPush != 0) {
+                        nodeStack->push(nodeToPush);
+                    }
+                }
             }
+        } else {
+            ++edgeCount;
         }
 
         x = nodeX - 1;
         y = nodeY;
-        if (node->getW() == 0 && input[y * (columns + newlineLength) + x] == ' ') {
-            nodeToPush = goToNextIntersectionAndCreateNodeIfItDoesntExist(node, x, y);
-            if (nodeToPush != 0) {
-                nodeStack->push(nodeToPush);
+        if (node->getW() == 0) {
+            if (input[y * (columns + newlineLength) + x] == ' ') {
+                nodeToPush = goToNextIntersectionAndCreateNodeIfItDoesntExist(node, x, y);
+                if (node->getW() != 0) {
+                    ++edgeCount;
+                    if (nodeToPush != 0) {
+                        nodeStack->push(nodeToPush);
+                    }
+                }
             }
+        } else {
+            ++edgeCount;
         }
 
         x = nodeX + 1;
-        if (node->getE() == 0 && input[y * (columns + newlineLength) + x] == ' ') {
-            nodeToPush = goToNextIntersectionAndCreateNodeIfItDoesntExist(node, x, y);
-            if (nodeToPush != 0) {
-                nodeStack->push(nodeToPush);
+        if (node->getE() == 0) {
+            if (input[y * (columns + newlineLength) + x] == ' ') {
+                nodeToPush = goToNextIntersectionAndCreateNodeIfItDoesntExist(node, x, y);
+                if (node->getE() != 0) {
+                    ++edgeCount;
+                    if (nodeToPush != 0) {
+                        nodeStack->push(nodeToPush);
+                    }
+                }
             }
+        } else {
+            ++edgeCount;
+        }
+        
+        if (edgeCount <= 1) {
+            
+            GraphEdge<Payload>* edge;
+            GraphNode<Payload>* otherNode;
+            do {
+                edge = node->getSingleEdge();
+                otherNode = getNodeAtTheOtherEndOfEdge(node, edge);
+                nodes[node->getY() * columns + node->getX()] = 0;
+                delete node;
+                node = otherNode;
+            } while (node != 0 && node->countEdges() == 1);
         }
     }
 
@@ -1251,11 +1295,9 @@ void Labyrinth::drawSolution() {
             heuristic(getStartNode()->getX(), getStartNode()->getY())
             );
     pqi->getPayload()->setPriorityQueueItem(pqi);
-    Payload* payload;
-
-    GraphNode<Payload>* currentNode;
     
-    int i = 0;
+    Payload* payload;
+    GraphNode<Payload>* currentNode;
 
     while (!pq->empty()) {
         //Estrai l'elemento con la distanza totale stimata più bassa
@@ -1290,16 +1332,12 @@ void Labyrinth::drawSolution() {
         if (currentNode->getW() != 0) {
             processNodeAtTheOtherEndOfEdge(currentNode, currentNode->getW(), pq);
         }
-        
-        ++i;
     }
 
     pq->clear();
-
     delete pq;
 
     std::cout << "No solution" << std::endl;
-    std::cout << input << std::endl;
 }
 
 void Labyrinth::processNodeAtTheOtherEndOfEdge(const GraphNode<Payload>* currentNode, const GraphEdge<Payload>* edge, PriorityQueue<Payload>* pq) const {
@@ -1387,10 +1425,10 @@ void Labyrinth::drawPath(GraphNode<Payload>* node, const GraphEdge<Payload>* edg
     //Ora x ed x fanno riferimento alla prima casella nella direzione in cui ci
     //si deve spostare
     int prevPositionIndex;
-    navigateToNextIntersection(node, x, y, prevPositionIndex, &Labyrinth::drawX);
+    navigateToNextIntersection(node, x, y, prevPositionIndex, &Labyrinth::drawPlus);
 }
 
-void Labyrinth::drawX(int x, int y) {
+void Labyrinth::drawPlus(int x, int y) {
     input[y * (columns + newlineLength) + x] = '+';
 }
 
@@ -1421,8 +1459,9 @@ int main(int argc, char** argv) {
         inputFileName = argv[1];
     } else {
         //inputFileName = const_cast<char*> ("test.txt");
-        inputFileName = const_cast<char*> ("test2.txt");
+        //inputFileName = const_cast<char*> ("test2.txt");
         //inputFileName = const_cast<char*> ("noSolution.txt");
+        inputFileName = const_cast<char*> ("labirint.txt");
     }
 
     std::ifstream infile(inputFileName, infile.binary | infile.ate);
@@ -1457,7 +1496,8 @@ int main(int argc, char** argv) {
     int rows = fileSize / rowLength;
     int columns = rowLength - newlineLength;
     
-    if (((columns + newlineLength) * rows) != fileSize) {
+    int recalculatedFileSize = ((columns + newlineLength) * rows);
+    if (recalculatedFileSize != fileSize && recalculatedFileSize - newlineLength != fileSize) {
         std::cout << "columns and rows count do not match with file size" << std::endl;
         return 1;
     }
