@@ -1455,9 +1455,10 @@ int main(int argc, char** argv) {
     if (argc >= 2) {
         inputFileName = argv[1];
     } else {
-        //inputFileName = const_cast<char*> ("test.txt");
+        //inputFileName = const_cast<char*> ("empty.txt");
+        //inputFileName = const_cast<char*> ("test1.txt");
         //inputFileName = const_cast<char*> ("test2.txt");
-        //inputFileName = const_cast<char*> ("noSolution.txt");
+        //inputFileName = const_cast<char*> ("test3.txt");
         inputFileName = const_cast<char*> ("500x500.txt");
     }
 
