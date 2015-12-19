@@ -1281,9 +1281,6 @@ Labyrinth::Labyrinth(char* stringInput, const int rows, const int columns, const
     }
 
     delete nodeStack;
-    
-    //@todo: rimuovere i nodi che sono dei vicoli ciechi e poi ripetere
-    //iterativamente il processo fino a che non si può più eliminare niente
 }
 
 void Labyrinth::drawSolution() {
