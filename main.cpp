@@ -1461,7 +1461,7 @@ int main(int argc, char** argv) {
         //inputFileName = const_cast<char*> ("test.txt");
         //inputFileName = const_cast<char*> ("test2.txt");
         //inputFileName = const_cast<char*> ("noSolution.txt");
-        inputFileName = const_cast<char*> ("labirint.txt");
+        inputFileName = const_cast<char*> ("500x500.txt");
     }
 
     std::ifstream infile(inputFileName, infile.binary | infile.ate);
